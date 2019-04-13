@@ -1,0 +1,5 @@
+04/13/2019 18:37:29 PM - DEBUG - This is a debug log.
+04/13/2019 18:37:29 PM - INFO - This is a info log.
+04/13/2019 18:37:29 PM - WARNING - This is a warning log.
+04/13/2019 18:37:29 PM - ERROR - This is a error log.
+04/13/2019 18:37:29 PM - CRITICAL - This is a critical log.
