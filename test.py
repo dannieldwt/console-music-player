@@ -13,17 +13,36 @@
 '''
 
 import logging
+import pygame
+import time
+import threading
+
 from order_line_parser.parser import parser_command
+from mutagen.mp3 import MP3
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 logging.basicConfig(filename='console-music-player.log', level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
+file="city of stars.mp3"
+#pygame.mixer.init()
+#track = pygame.mixer.music.load(file)
+#pygame.mixer.music.play(1)
+#pygame.mixer.music.stop()
+#audio = MP3(file)
+#time_mp3 = audio.info.length
+#time.sleep(time_mp3)
 
-while True:
-    command = input(">>: ")
-    parser_bool, parser_result = parser_command(command)
-    print("parser_bool: ", parser_bool)
-    print("parser_result: ", parser_result)
 
+def test_play(file):
+    audio = MP3(file)
+    time_mp3 = audio.info.length
+    pygame.mixer.init()
+    track = pygame.mixer.music.load(file)
+    pygame.mixer.music.play(1)
+    time.sleep(time_mp3)
+
+t= threading.Thread(target=test_play,args=(file,))
+#t.setDaemon(True)
+t.start()#开启线程
 
