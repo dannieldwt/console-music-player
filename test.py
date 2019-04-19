@@ -17,7 +17,6 @@ import pygame
 import time
 import threading
 
-from order_line_parser.parser import parser_command
 from mutagen.mp3 import MP3
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
