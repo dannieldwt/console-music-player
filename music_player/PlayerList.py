@@ -54,7 +54,41 @@ class Abstract_PlayList(object):
     def create_time(self, create_time):
         self.create_time = create_time
 
-    @abc.abstractmethod
-    def play(self):
-        pass
+class PlayList(Abstract_PlayList):
+    '''
+    该类为普通的播放列表类
+    list_container: 包含列表项的容器
+    current_Item: 当前播放的索引
+    create_time: 创建时间
+    '''
+    def __init__(self, list_container, current_item=1, create_time=""):
+        self.__list_container = list_container
+        self.__current_Item = current_item - 1
+        if create_time == "":
+            self.create_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        else:
+            self.create_time = create_time
 
+    @property
+    def list_container(self):
+        return self.list_container
+
+    @list_container.setter
+    def list_container(self, list_container):
+        self.list_container = list_container
+
+    @property
+    def current_Item(self):
+        return self.current_Item
+
+    @current_Item.setter
+    def current_Item(self, current_Item):
+        self.current_Item = current_Item
+
+    @property
+    def create_time(self):
+        return self.create_time
+
+    @create_time.setter
+    def create_time(self, create_time):
+        self.create_time = create_time

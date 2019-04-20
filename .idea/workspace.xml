@@ -2,16 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="cfb53e23-a311-41e0-8829-32fc0a2f0df7" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/music_player/ListItem.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/music_player/Player.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/music_player/PlayerList.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/music_player/Song.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/music_player/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/console_UI/cmd.py" beforeDir="false" afterPath="$PROJECT_DIR$/console_UI/cmd.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/order_line_parser/console-music-player.log" beforeDir="false" afterPath="$PROJECT_DIR$/order_line_parser/console-music-player.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/order_line_parser/parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/order_line_parser/parser.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/music_player/PlayerList.py" beforeDir="false" afterPath="$PROJECT_DIR$/music_player/PlayerList.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -71,8 +62,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/music_player/ListItem.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="306">
-              <caret line="33" column="13" selection-start-line="33" selection-start-column="13" selection-end-line="33" selection-end-column="13" />
+            <state relative-caret-position="329">
+              <caret line="34" column="33" selection-start-line="34" selection-start-column="33" selection-end-line="34" selection-end-column="85" />
               <folding>
                 <element signature="e#210#224#0" expanded="true" />
               </folding>
@@ -84,7 +75,7 @@
         <entry file="file://$PROJECT_DIR$/music_player/PlayerList.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="283">
-              <caret line="60" lean-forward="true" selection-start-line="60" selection-end-line="60" />
+              <caret line="94" lean-forward="true" selection-start-line="94" selection-end-line="94" />
               <folding>
                 <element signature="e#215#229#0" expanded="true" />
               </folding>
@@ -310,23 +301,22 @@
       <workItem from="1555147192328" duration="24833000" />
       <workItem from="1555580953323" duration="6520000" />
       <workItem from="1555600656788" duration="1019000" />
-      <workItem from="1555673774198" duration="7524000" />
+      <workItem from="1555673774198" duration="10600000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="60625000" />
+    <option name="totallyTimeSpent" value="63701000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-7" y="-7" width="1550" height="838" extended-state="7" />
-    <editor active="true" />
+    <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.26340482" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.3286119" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.49798927" visible="true" weight="0.3286119" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49798927" weight="0.3286119" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49932975" weight="0.39943343" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -416,16 +406,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/music_player/ListItem.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="33" column="13" selection-start-line="33" selection-start-column="13" selection-end-line="33" selection-end-column="13" />
-          <folding>
-            <element signature="e#210#224#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/music_player/Player.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="191">
@@ -446,10 +426,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/music_player/ListItem.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="329">
+          <caret line="34" column="33" selection-start-line="34" selection-start-column="33" selection-end-line="34" selection-end-column="85" />
+          <folding>
+            <element signature="e#210#224#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/music_player/PlayerList.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="283">
-          <caret line="60" lean-forward="true" selection-start-line="60" selection-end-line="60" />
+          <caret line="94" lean-forward="true" selection-start-line="94" selection-end-line="94" />
           <folding>
             <element signature="e#215#229#0" expanded="true" />
           </folding>
