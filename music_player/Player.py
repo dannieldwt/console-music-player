@@ -13,14 +13,12 @@
 播放音乐采用pyGame库
 '''
 
-import logging
 import pygame
+import os
+from music_player.PlayerList import  PlayList
 from enum import Enum, unique
 from mutagen.mp3 import MP3
-
-LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
-logging.basicConfig(filename='console-music-player.log', level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
+from music_player.ListItem import ListItem
 
 @unique
 class Mode(Enum):
@@ -50,6 +48,7 @@ class Player(object):
     __mode = Mode.none
     __status = Status.none
     __volume = 50
+    __current_playerList = None
     __instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -57,3 +56,42 @@ class Player(object):
             Player.__instance = object.__new__(Player)
         return Player.__instance
 
+    def load(self, dir="", new_list=False):
+        '''
+        该函数用于加载某个目录下的音乐
+        :param dir: 目录名，可以是绝对路径也能是相对路径，均被处理为绝对路径
+        若目录名为空，则默认为当前目录。
+        :param new_list: 表示是否加载音乐后，同时产生一个新的播放列表
+        默认为False，将在原播放列表后插入新载入的歌曲
+        :return: service-bool: 服务层执行结果
+        msg: 服务层执行结果信息
+        '''
+        if self.__current_playerList == None or new_list == False:
+            self.__current_playerList = PlayList([])
+        if dir == "":
+            abs_dir = os.getcwd()
+        else:
+            abs_dir = os.path.abspath(dir)
+        count = 0
+        for root, dirs, files in os.walk(abs_dir):
+            for file in files:
+                if os.path.splitext(file)[1] == '.mp3':
+                    item = ListItem(os.path.join(root, file))
+                    self.__current_playerList.append_item(item)
+                    count += 1
+        service_bool = True
+        msg = self.__service_result_helper(service_bool, "加载音乐成功，共加载音乐%d首" % (count))
+        return service_bool, msg
+
+
+    def __service_result_helper(self, service_bool, msg):
+        '''
+        :param service_bool: 服务层服务执行结果
+        :param msg: 服务层执行成功与否的信息
+        :return: 封装好的信息
+        '''
+        if service_bool:
+            msg = "SERVICE SUCCESS: %s\n" % (msg)
+        else:
+            msg = "SERVICE ERROR: %s\n" % (msg)
+        return msg

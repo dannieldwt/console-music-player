@@ -12,13 +12,9 @@
 普通播放列表，收藏列表，拉黑列表的定义
 '''
 
-import logging
 import time
 import abc
-
-LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
-logging.basicConfig(filename='console-music-player.log', level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
+from music_player import ListItem
 
 class Abstract_PlayList(object):
     '''
@@ -30,29 +26,35 @@ class Abstract_PlayList(object):
     @property
     @abc.abstractmethod
     def list_container(self):
-        return self.list_container
+        return self._list_container
 
     @list_container.setter
     def list_container(self, list_container):
-        self.list_container = list_container
+        self._list_container = list_container
 
     @property
     @abc.abstractmethod
-    def current_Item(self):
-        return self.__current_Item
+    def current_item(self):
+        return self._current_item
 
-    @current_Item.setter
-    def current_Item(self, current_Item):
-        self.current_Item = current_Item
+    @current_item.setter
+    def current_item(self, current_item):
+        self._current_item = current_item
 
     @property
     @abc.abstractmethod
     def create_time(self):
-        return self.create_time
+        return self._create_time
 
     @create_time.setter
     def create_time(self, create_time):
-        self.create_time = create_time
+        self._create_time = create_time
+
+    @property
+    @abc.abstractmethod
+    def length(self):
+        return len(self.list_container)
+
 
 class PlayList(Abstract_PlayList):
     '''
@@ -61,34 +63,43 @@ class PlayList(Abstract_PlayList):
     current_Item: 当前播放的索引
     create_time: 创建时间
     '''
-    def __init__(self, list_container, current_item=1, create_time=""):
-        self.__list_container = list_container
-        self.__current_Item = current_item - 1
+    def __init__(self, list_container, current_item=0, create_time=""):
+        self.list_container = list_container
+        self.current_item = current_item
         if create_time == "":
             self.create_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         else:
             self.create_time = create_time
 
     @property
-    def list_container(self):
-        return self.list_container
+    def length(self):
+        return len(self.list_container)
 
-    @list_container.setter
-    def list_container(self, list_container):
-        self.list_container = list_container
+    def append_item(self, item):
+        '''
+        该函数用于向播放列表中添加歌曲
+        歌曲被封装成item的形式
+        :param item: 歌曲被封装成item格式
+        :return: msg:封装好的信息
+                 service_bool: 该层执行结果
+        '''
+        if ~isinstance(item, ListItem.ListItem):
+            service_bool = False
+            msg = self.service_result_helper(service_bool, "添加歌曲类型不符合规范")
+            return service_bool, msg
+        self.list_container.append(item)
+        service_bool = True
+        msg = self.service_result_helper(service_bool, "添加歌曲成功")
+        return service_bool, msg
 
-    @property
-    def current_Item(self):
-        return self.current_Item
-
-    @current_Item.setter
-    def current_Item(self, current_Item):
-        self.current_Item = current_Item
-
-    @property
-    def create_time(self):
-        return self.create_time
-
-    @create_time.setter
-    def create_time(self, create_time):
-        self.create_time = create_time
+    def service_result_helper(self, service_bool, msg):
+        '''
+        :param service_bool: 服务层服务执行结果
+        :param msg: 服务层执行成功与否的信息
+        :return: 封装好的信息
+        '''
+        if service_bool:
+            msg = "SERVICE SUCCESS: %s\n" % (msg)
+        else:
+            msg = "SERVICE ERROR: %s\n" % (msg)
+        return msg

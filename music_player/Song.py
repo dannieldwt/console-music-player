@@ -23,9 +23,11 @@ class Song(object):
     '''
     歌曲类，包含了歌曲的基本属性以及接口
     '''
+    __count = 0
 
-    def __init__(self, ID, filepath):
-        self.__ID = ID
+    def __init__(self, filepath):
+        self.__ID = self.__count
+        self.__count += 1
         self.__filepath = filepath
         self.__name = os.path.basename(filepath)
         self.__length = 0

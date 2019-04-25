@@ -15,6 +15,7 @@
 import logging
 import pygame
 import time
+import os
 import threading
 
 from mutagen.mp3 import MP3
@@ -34,6 +35,7 @@ file="city of stars.mp3"
 
 
 def test_play(file):
+    print("测试")
     audio = MP3(file)
     time_mp3 = audio.info.length
     pygame.mixer.init()
@@ -41,7 +43,12 @@ def test_play(file):
     pygame.mixer.music.play(1)
     time.sleep(time_mp3)
 
-t= threading.Thread(target=test_play,args=(file,))
-#t.setDaemon(True)
-t.start()#开启线程
+
+# t= threading.Thread(target=test_play,args=(file,))
+# #t.setDaemon(True)
+# t.start()#开启线程
+
+path = "D:\console-music-player\console-music-player\music_player"
+newpath = os.path.abspath(path)
+print(newpath)
 

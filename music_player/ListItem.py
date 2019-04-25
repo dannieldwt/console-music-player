@@ -25,14 +25,17 @@ class ListItem(object):
     该类为播放列表列表项类
     一项对应一首歌曲
     '''
+    __count = 0
 
-    def __init__(self, ID, song, create_time=""):
-        self.__ID = ID
-        self.__song = song
+    def __init__(self, filepath, create_time=""):
+        self.__ID = self.__count
+        self.__count += 1
+        self.__song = Song(filepath)
         if create_time != "":
             self.__create_time = create_time
         else:
             self.__create_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
 
     @property
     def ID(self):
