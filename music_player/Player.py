@@ -19,17 +19,8 @@ from music_player.PlayerList import  PlayList
 from enum import Enum, unique
 from mutagen.mp3 import MP3
 from music_player.ListItem import ListItem
-
-@unique
-class Mode(Enum):
-    '''
-    枚举类定义，包含了播放器支持的音乐播放模式
-    '''
-    none = 0
-    Sequential = 1
-    Loop = 2
-    Random = 3
-    Single = 4
+from PyQt5.QtMultimedia import *
+from PyQt5.QtCore import QUrl
 
 @unique
 class Status(Enum):
@@ -45,9 +36,19 @@ class Player(object):
     服务层的核心类，播放器，采用单例模式。
     使用PyGame进行音乐播放， 向上层提供音乐播放接口
     '''
-    __mode = Mode.none
-    __status = Status.none
-    __volume = 50
+    __mode_name_table = {QMediaPlaylist.CurrentItemOnce: "单曲播放",
+                        QMediaPlaylist.CurrentItemInLoop: "单曲循环",
+                        QMediaPlaylist.Sequential: "顺序播放",
+                        QMediaPlaylist.Loop: "循环播放",
+                        QMediaPlaylist.Random: "随机播放"}
+    __mode_table = {"once": QMediaPlaylist.CurrentItemOnce,
+                    "single_loop": QMediaPlaylist.CurrentItemInLoop,
+                    "sequential": QMediaPlaylist.Sequential,
+                    "loop": QMediaPlaylist.Loop,
+                    "random": QMediaPlaylist.Random}
+    #__status = Status.none
+    __status = Status.Read
+    __current_player = QMediaPlayer()
     __current_playerList = None
     __instance = None
 
@@ -66,8 +67,12 @@ class Player(object):
         :return: service-bool: 服务层执行结果
         msg: 服务层执行结果信息
         '''
-        if self.__current_playerList == None or new_list == False:
-            self.__current_playerList = PlayList([])
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        if self.__current_playerList == None or new_list == True:
+            self.__current_playerList = QMediaPlaylist()
         if dir == "":
             abs_dir = os.getcwd()
         else:
@@ -76,13 +81,315 @@ class Player(object):
         for root, dirs, files in os.walk(abs_dir):
             for file in files:
                 if os.path.splitext(file)[1] == '.mp3':
-                    item = ListItem(os.path.join(root, file))
-                    self.__current_playerList.append_item(item)
+                    print(os.path.join(root, file))
+                    item = QMediaContent(QUrl.fromLocalFile(os.path.join(root, file)))
+                    self.__current_playerList.addMedia(item)
                     count += 1
         service_bool = True
         msg = self.__service_result_helper(service_bool, "加载音乐成功，共加载音乐%d首" % (count))
         return service_bool, msg
 
+    def play(self, name=""):
+        '''
+        该函数用于播放指定音乐
+        :param name: 默认值为空时，播放当前播放列表的当前音乐
+        否则播放指定名字的音乐，若该名字音乐不存在，则不进行播放
+        :return: service_bool: 服务层执行结果
+        msg: 服务层执行结果信息
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        if self.__current_playerList == None:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "未载入音乐，请先载入音乐")
+            return service_bool, msg
+        if name != "":
+            exist = self.__contains_item(name)
+            if  exist == -1:
+                service_bool = False
+                msg = self.__service_result_helper(service_bool, "播放列表中不存在该音乐")
+                return service_bool, msg
+            if self.__current_player.playlist() != self.__current_playerList:
+                self.__current_player.setPlaylist(self.__current_playerList)
+            #self.__current_player.setVolume(50)
+            self.__current_playerList.setCurrentIndex(exist)
+            self.__current_player.play()
+            service_bool = True
+            msg = self.__service_result_helper(service_bool, "播放音乐: %s" % (name))
+            return service_bool, msg
+        else:
+            if self.__current_player.playlist() != self.__current_playerList:
+                self.__current_player.setPlaylist(self.__current_playerList)
+            #self.__current_player.setVolume(50)
+            #self.__current_playerList.setCurrentIndex(0)
+            self.__current_player.play()
+            service_bool = True
+            idx = self.__current_playerList.currentIndex()
+            name = self.__current_playerList.media(idx).canonicalUrl().fileName()
+            msg = self.__service_result_helper(service_bool, "播放音乐: %s" % (name))
+            return service_bool, msg
+
+    def next(self, step=1):
+        '''
+        该函数用于播放下一首或下n首歌曲
+        :param step: 表示要播放距离，默认为一，播放下一首
+        :return: service_bool: 服务层执行结果
+        msg: 服务层执行信息
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        if self.__current_playerList == None:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "未载入音乐，请先载入音乐")
+            return service_bool, msg
+        if self.__current_playerList != self.__current_player.playlist():
+            self.__current_player.setPlaylist(self.__current_playerList)
+
+        current_idx_old = self.__current_playerList.currentIndex()
+        if (self.__current_playerList.playbackMode() == QMediaPlaylist.Sequential and current_idx_old == -1) or (
+                self.__current_playerList.playbackMode()== QMediaPlaylist.CurrentItemInLoop and current_idx_old == -1):
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "播放列表中不存在下一首音乐")
+            return service_bool, msg
+        self.__current_playerList.next()
+        current_idx_new = self.__current_playerList.currentIndex()
+        if (self.__current_playerList.playbackMode() == QMediaPlaylist.Sequential and current_idx_old == -1) or (
+                self.__current_playerList.playbackMode()== QMediaPlaylist.CurrentItemInLoop and current_idx_old == -1):
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "播放列表中不存在下一首音乐")
+            return service_bool, msg
+
+        service_bool = True
+        idx = self.__current_playerList.currentIndex()
+        name = self.__current_playerList.media(idx).canonicalUrl().fileName()
+        msg = self.__service_result_helper(service_bool, "成功播放下一首歌曲：%s" % (name))
+        return service_bool, msg
+
+    def previous(self, step=1):
+        '''
+        该函数用于播放上一首或上n首歌曲
+        :param step: 表示要播放距离，默认为一，播放上一首
+        :return: service_bool: 服务层执行结果
+        msg: 服务层执行信息
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        if self.__current_playerList == None:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "未载入音乐，请先载入音乐")
+            return service_bool, msg
+        if self.__current_playerList != self.__current_player.playlist():
+            self.__current_player.setPlaylist(self.__current_playerList)
+
+        current_idx_old = self.__current_playerList.currentIndex()
+        if (self.__current_playerList.playbackMode() == QMediaPlaylist.Sequential and current_idx_old == -1) or (
+                self.__current_playerList.playbackMode()== QMediaPlaylist.CurrentItemInLoop and current_idx_old == -1):
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "播放列表中不存在上一首音乐")
+            return service_bool, msg
+        self.__current_playerList.previous()
+        print(current_idx_old)
+        current_idx_new = self.__current_playerList.currentIndex()
+        if (self.__current_playerList.playbackMode() == QMediaPlaylist.Sequential and current_idx_old == -1) or (
+                self.__current_playerList.playbackMode()== QMediaPlaylist.CurrentItemInLoop and current_idx_old == -1):
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "播放列表中不存在上一首音乐")
+            return service_bool, msg
+
+        service_bool = True
+        name = self.__current_playerList.media(current_idx_new).canonicalUrl().fileName()
+        msg = self.__service_result_helper(service_bool, "成功播放上一首歌曲：%s" % (name))
+        return service_bool, msg
+
+    def up(self, step=1):
+        '''
+        该函数用于提高音量，step表示提高音量提高值
+        :param step:
+        :return:
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        if self.__current_playerList == None:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "未载入音乐，请先载入音乐")
+            return service_bool, msg
+        if step > 100 or step < 0:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "输入的音量值不符合规范")
+            return service_bool, msg
+        if self.__current_player.volume() + step > 100:
+            self.__current_player.setVolume(100)
+            service_bool = True
+            msg = self.__service_result_helper(service_bool, "音量值已经达到最大")
+            return service_bool, msg
+        self.__current_player.setVolume(self.__current_player.volume() + step)
+        service_bool = True
+        msg = self.__service_result_helper(service_bool, "音量调整为：%d" % (self.__current_player.volume()))
+        return service_bool, msg
+
+    def down(self, step=1):
+        '''
+        该函数用于降低音量，step表示提高音量提高值
+        :param step: 表示降低的幅度
+        :return:
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        if self.__current_playerList == None:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "未载入音乐，请先载入音乐")
+            return service_bool, msg
+        if step > 100 or step < 0:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "输入的音量值不符合规范")
+            return service_bool, msg
+        if self.__current_player.volume() - step < 0:
+            self.__current_player.setVolume(0)
+            service_bool = True
+            msg = self.__service_result_helper(service_bool, "音量值已经达到最大")
+            return service_bool, msg
+        self.__current_player.setVolume(self.__current_player.volume() - step)
+        service_bool = True
+        msg = self.__service_result_helper(service_bool, "音量调整为：%d" % (self.__current_player.volume()))
+        return service_bool, msg
+
+    def pause(self):
+        '''
+        该函数用于暂停正在播放的音乐
+        :return:
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        self.__current_player.pause()
+        service_bool = True
+        idx = self.__current_playerList.currentIndex()
+        name = self.__current_playerList.media(idx).canonicalUrl().fileName()
+        msg = self.__service_result_helper(service_bool, "暂停播放音乐%s" % (name))
+        return service_bool, msg
+
+    def stop(self):
+        '''
+        该函数用于停止正在播放的音乐
+        :return: service_bool: 表示执行的结果
+        msg: 执行结果信息
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        self.__current_player.stop()
+        service_bool = True
+        idx = self.__current_playerList.currentIndex()
+        name = self.__current_playerList.media(idx).canonicalUrl().fileName()
+        msg = self.__service_result_helper(service_bool, "停止播放音乐%s" % (name))
+        return service_bool, msg
+
+    def mode(self, m=""):
+        '''
+        该函数用于切换播放模式
+        :param m:  表示要切换的播放模式，若为空串，则为往下的一个模式
+        :return:
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        if m == "":
+            self.__current_playerList.setPlaybackMode((1 + self.__current_playerList.playbackMode()) % 5)
+            service_bool = True
+            msg = self.__service_result_helper(service_bool, "切换音乐播放模式为: %s" % (self.__mode_name_table[
+                self.__current_playerList.playbackMode()]))
+            return service_bool, msg
+        else:
+            if m in self.__mode_table:
+                service_bool = False
+                msg = self.__service_result_helper(service_bool, "模式参数输入不正确")
+                return service_bool, msg
+            mod = self.__mode_table[m]
+            self.__current_playerList(mod)
+            service_bool = True
+            msg = self.__service_result_helper(service_bool, "切换音乐播放模式为: %s" % (self.__mode_name_table[mod]))
+            return service_bool, msg
+
+    def list(self, num=10):
+        '''
+        该函数用于显示当前播放列表
+        :param num: 表示显示多少首歌信息
+        :return: service_bool: 服务层执行结果
+        msg: 服务层执行信息
+        names: list类型，播放列表中从当前开始的下num首歌名
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
+            return service_bool, msg
+        len = self.__current_playerList.mediaCount()
+        idx = self.__current_playerList.currentIndex()
+        it = 0
+        names = []
+        while idx < len and it < num:
+            if idx == -1:
+                idx += 1
+                continue
+            name = self.__current_playerList.media(idx).canonicalUrl().fileName()
+            names.append(name)
+            it += 1
+            idx += 1
+        service_bool = True
+        msg = self.__service_result_helper(service_bool, "当前%d首歌为：" % (num))
+        return service_bool, msg, names
+
+    def pwd(self):
+        '''
+        显示音乐播放器当前的工作目录
+        :return: service_bool: 服务层执行结果
+        msg: 服务层执行信息
+        '''
+        abs_dir = os.getcwd()
+        service_bool = True
+        msg = self.__service_result_helper(service_bool, "当前的工作目录为: %s" % (abs_dir))
+        return service_bool, msg
+
+    def cd(self, path):
+        '''
+        切换音乐播放器的当前工作目录
+        :param path: 切换的目录
+        :return: service_bool: 服务层执行结果
+        msg: 服务层执行信息
+        '''
+        abs_dir = os.path.abspath(path)
+        os.chdir(abs_dir)
+        service_bool = True
+        msg = self.__service_result_helper(service_bool, "当前的工作目录切换为：%s" % (abs_dir))
+        return service_bool, msg
+
+    def __contains_item(self, name):
+        '''
+        通过名字确定歌曲是否在播放列表中
+        :param name: 歌曲名
+        :return: int类型，-1表示item不存在
+        '''
+        if self.__current_playerList == None:
+            return False
+        len = self.__current_playerList.mediaCount()
+        for L in range(len):
+            url = self.__current_playerList.media(L).canonicalUrl()
+            filename = url.fileName().split('.')[0].strip()
+            if filename == name:
+                return  L
+        return -1
 
     def __service_result_helper(self, service_bool, msg):
         '''

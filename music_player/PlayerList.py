@@ -92,6 +92,17 @@ class PlayList(Abstract_PlayList):
         msg = self.service_result_helper(service_bool, "添加歌曲成功")
         return service_bool, msg
 
+    def contains_item(self, name):
+        '''
+        该函数用于判断播放列表中是否存在某歌曲
+        :param name: 歌曲名
+        :return: exist: 表示该歌曲是否存在
+        '''
+        for L in self.list_container:
+            if L.song.name == name:
+                return True
+        return False
+
     def service_result_helper(self, service_bool, msg):
         '''
         :param service_bool: 服务层服务执行结果

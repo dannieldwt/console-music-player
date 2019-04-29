@@ -33,7 +33,6 @@ class cmd_UI(QPlainTextEdit):
             command_raw = self.document().findBlockByLineNumber(lines - 1).text()
             command = command_raw[4:]
             parser_singleton = Parser()
-            print(id(parser_singleton))
             parser_bool, parser_result = parser_singleton.parser_command(command)
             self.appendPlainText(parser_result)
             super().keyPressEvent(event)

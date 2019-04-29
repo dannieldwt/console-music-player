@@ -44,121 +44,117 @@ class Parser(object):
             if command_terms_len == 1:
                 #如果当前没有音乐则表示播放失败，无音乐
                 #否则播放当前音乐
-                # play_bool, msg = play()
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                service_bool, msg = player.play()
                 parser_bool = True
-                return parser_bool, parser_result
+                parser_msg = self.__parser_result_helper(parser_bool, msg, command)
+                return parser_bool, parser_msg
             elif command_terms_len == 2:
                 #播放所指定的歌名，如果歌名不存在报错(这是服务层的错误）
                 #否则按照相应歌名进行播放
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                service_bool, msg = player.play(command_terms[1])
                 parser_bool = True
-                return parser_bool, parser_result
+                parser_msg = self.__parser_result_helper(parser_bool, msg, command)
+                return parser_bool, parser_msg
             else:
                 #参数超过三个，命令格式有错，解析失败
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
-                return parser_bool, parser_result
-        elif command_terms[0] == 'p':
+                parser_msg = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范", command)
+                return parser_bool, parser_msg
+        elif command_terms[0] == 'previous':
             if command_terms_len == 1:
                 #播放上一首
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                service_bool,msg = player.previous()
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             else:
                 #存在参数，命令格式错误，解析失败
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
-        elif command_terms[0] == 'n':
+        elif command_terms[0] == 'next':
             if command_terms_len == 1:
                 #播放下一首
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                service_bool,msg = player.next()
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             else:
                 #存在参数， 命令格式有误， 解析失败
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
         elif command_terms[0] == 'up':
             if command_terms_len == 1:
                 #没参数默认提高一个音量
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                service_bool, msg = player.up()
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             elif command_terms_len == 2:
-                if ~(command_terms[1].isdigit()):
+                if command_terms[1].isdigit() == False:
                     #输入不是纯数字，浮点数或者有字符
-                    parser_result = "PARSER ERROR: %s" % (command)
                     parser_bool = False
+                    parser_result = self.__parser_result_helper(parser_bool, "输入不符合规范", command)
                     return parser_bool, parser_result
-                voice = eval(command_terms[1])
-                '''
-                if voice > 100 or voice < 0:
-                    #输入的数值不在规范内
-                    parser_result = "PARSER ERROR: %s" % (command)
-                    parser_bool = False
-                    logging.info("command-up parser ERROR, value")
-                    return parser_bool, parser_result
-                '''
+                step = eval(command_terms[1])
                 #调用服务层服务 设置音量
+                service_bool, msg = player.up(step)
+                parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
+                return parser_bool, parser_result
             else:
                 #参数过多，命令不符合规范
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
         elif command_terms[0] == 'down':
             if command_terms_len == 1:
                 # 没参数默认提高一个音量
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                service_bool, msg = player.down()
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             elif command_terms_len == 2:
-                if ~(command_terms[1].isdigit()):
+                if command_terms[1].isdigit() == False:
                     # 输入不是纯数字，浮点数或者有字符
-                    parser_result = "PARSER ERROR: %s" % (command)
                     parser_bool = False
+                    parser_result = self.__parser_result_helper(parser_bool, "输入不符合规范", command)
                     return parser_bool, parser_result
-                voice = eval(command_terms[1])
-                '''
-                if voice > 100 or voice < 0:
-                    #输入的数值不在规范内
-                    parser_result = "PARSER ERROR: %s" % (command)
-                    parser_bool = False
-                    logging.info("command-down parser ERROR, value")
-                    return parser_bool, parser_result
-                '''
+                step = eval(command_terms[1])
                 # 调用服务层服务 设置音量
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                service_bool, msg = player.down(step)
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             else:
                 # 参数过多，命令不符合规范
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
         elif command_terms[0] == "pause":
             if command_terms_len == 1:
                 #命令格式正确，暂停正在播放的音乐
-                parser_result = "PARSER SUCCESS %s" % (command)
+                service_bool, msg = player.pause()
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             else:
                 #参数过多，命令格式不符合规范
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
         elif command_terms[0] == "stop":
             if command_terms_len == 1:
                 #命令格式正确，停止正在播放的音乐
-                parser_result = "PARSER SUCCESS %s" % (command)
+                service_bool, msg = player.stop()
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             else:
                 #参数过多，命令格式不符合规范
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
         elif command_terms[0] == "lyric":
             if command_terms_len == 1:
@@ -173,32 +169,53 @@ class Parser(object):
                 return parser_bool, parser_result
         elif command_terms[0] == "mode":
             if command_terms_len == 1:
-                parser_result = "PARSER SUCCESS %s" % (command)
+                # mode顺序向下切换一个
+                service_bool, msg = player.mode()
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             elif command_terms_len == 2:
-                parser_result = "PARSER SUCCESS %s" % (command)
+                # 切换到指定模式
+                service_bool, msg = player.mode(command_terms[1])
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             else:
                 # 参数过多，命令格式不符合规范
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
         elif command_terms[0] == "list":
             if command_terms_len == 1:
-                #mode顺序向下切换一个
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                #命令格式正确，显示列表往下十首
+                service_bool, msg, names = player.list()
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
+                id = 1
+                for name in names:
+                    parser_result += "%d: %s\n" % (id, name)
+                    id += 1
                 return parser_bool, parser_result
             elif command_terms_len == 2:
-                #切换到指定模式
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                #命令格式正确，显示列表往下num首
+                if command_terms[1].isdigit() == False:
+                    #输入不是纯数字，浮点数或者有字符
+                    parser_bool = False
+                    parser_result = self.__parser_result_helper(parser_bool, "输入不符合规范", command)
+                    return parser_bool, parser_result
+                num = eval(command_terms[1])
+                service_bool, msg, names = player.list(num)
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
+                id = 1
+                for name in names:
+                    parser_result += "%d: %s\n" % (id, name)
+                    id += 1
                 return parser_bool, parser_result
             else:
-                parser_result = "PARSER ERROR: %s" % (command)
+                # 参数过多，命令格式不符合规范
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
         elif command_terms[0] == "delete":
             if command_terms_len == 1:
@@ -219,29 +236,31 @@ class Parser(object):
         elif command_terms[0] == "pwd":
             if command_terms_len == 1:
                 #显示当前目录
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                service_bool, msg = player.pwd()
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
-            elif command_terms_len == 2:
-                #显示歌名对应的歌曲所在的目录
-                parser_result = "PARSER SUCCESS: %s" % (command)
-                parser_bool = True
-                return parser_bool, parser_result
+            # elif command_terms_len == 2:
+            #     #显示歌名对应的歌曲所在的目录
+            #     parser_result = "PARSER SUCCESS: %s" % (command)
+            #     parser_bool = True
+            #     return parser_bool, parser_result
             else:
                 # 命令格式不符合规范
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
         elif command_terms[0] == "cd":
             if command_terms_len == 2:
                 #切换到指定目录
-                parser_result = "PARSER SUCCESS: %s" % (command)
+                service_bool, msg = player.cd(command_terms[1])
                 parser_bool = True
+                parser_result = self.__parser_result_helper(parser_bool, msg, command)
                 return parser_bool, parser_result
             else:
                 # 命令格式不符合规范
-                parser_result = "PARSER ERROR: %s" % (command)
                 parser_bool = False
+                parser_result = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范" % (command))
                 return parser_bool, parser_result
         elif command_terms[0] == "quit":
             if command_terms_len == 1:
@@ -258,24 +277,14 @@ class Parser(object):
             if command_terms_len == 1:
                 #在当前目录加载所有mp3音乐文件
                 service_bool, msg = player.load()
-                if service_bool:
-                    parser_bool = True
-                    parser_msg = self.__parser_result_helper(parser_bool, msg, command)
-                    return parser_bool, parser_msg
-                else:
-                    parser_bool = False
-                    parser_msg = self.__parser_result_helper(parser_bool, msg, command)
-                    return parser_bool, parser_msg
+                parser_bool = True
+                parser_msg = self.__parser_result_helper(parser_bool, msg, command)
+                return parser_bool, parser_msg
             elif command_terms_len == 2:
                 service_bool, msg = player.load(command_terms[1])
-                if service_bool:
-                    parser_bool = True
-                    parser_msg = self.__parser_result_helper(parser_bool, msg, command)
-                    return parser_bool, parser_msg
-                else:
-                    parser_bool = False
-                    parser_msg = self.__parser_result_helper(parser_bool, msg, command)
-                    return parser_bool, parser_msg
+                parser_bool = True
+                parser_msg = self.__parser_result_helper(parser_bool, msg, command)
+                return parser_bool, parser_msg
             else:
                 parser_bool = False
                 parser_msg = self.__parser_result_helper(parser_bool, "参数过多， 不符合命令规范", command)
@@ -295,7 +304,7 @@ class Parser(object):
         if parser_bool:
             parser_msg = "PARSER SUCCESS: %s\n" % (command) + service_msg
         else:
-            parser_msg = "PARSER ERROR: %s" % (command)
+            parser_msg = "PARSER ERROR: %s\n" % (command) + service_msg
         return parser_msg
 
 
