@@ -12,6 +12,7 @@
 '''
 
 from music_player.Player import Player
+from analyze.Analyze import Analyze
 
 class Parser(object):
     __instance = None
@@ -289,10 +290,38 @@ class Parser(object):
                 parser_bool = False
                 parser_msg = self.__parser_result_helper(parser_bool, "参数过多， 不符合命令规范", command)
                 return parser_bool, parser_msg
+        elif command_terms[0] == "analyze":
+            if command_terms_len == 2:
+                #进行文本分析
+                service_bool, msg = player.analyze(command_terms[1])
+                parser_bool = True
+                parser_msg = self.__parser_result_helper(parser_bool, msg, command)
+                return parser_bool, parser_msg
+            else:
+                parser_bool = False
+                parser_msg = self.__parser_result_helper(parser_bool, "参数不符合命令规范", command)
+                return parser_bool, parser_msg
+        elif command_terms[0] == "status":
+            if command_terms_len == 1:
+                #播放器模式的切换
+                service_bool, msg = player.status()
+                parser_bool = True
+                parser_msg = self.__parser_result_helper(parser_bool, msg, command)
+                return parser_bool, parser_msg
+            elif command_terms_len == 2:
+                service_bool, msg = player.analyze(command_terms[1])
+                parser_bool = True
+                parser_msg = self.__parser_result_helper(parser_bool, msg, command)
+                return parser_bool, parser_msg
+            else:
+                parser_bool = False
+                parser_msg = self.__parser_result_helper(parser_bool, "参数过多，不符合命令规范", command)
+                return parser_bool, parser_msg
         else:
             #不存在的命令
-            parser_result = "PARSER ERROR: %s" % (command)
+            parser_msg = "PARSER ERROR: %s" % (command)
             parser_bool = False
+            return parser_bool, parser_msg
 
     def __parser_result_helper(self, parser_bool, service_msg, command):
         '''

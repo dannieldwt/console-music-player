@@ -15,12 +15,14 @@
 
 import pygame
 import os
+import sys
 from music_player.PlayerList import  PlayList
 from enum import Enum, unique
 from mutagen.mp3 import MP3
 from music_player.ListItem import ListItem
 from PyQt5.QtMultimedia import *
 from PyQt5.QtCore import QUrl
+from analyze.Analyze import Analyze
 
 @unique
 class Status(Enum):
@@ -47,9 +49,11 @@ class Player(object):
                     "loop": QMediaPlaylist.Loop,
                     "random": QMediaPlaylist.Random}
     #__status = Status.none
-    __status = Status.Read
+    __status = Status.Music
     __current_player = QMediaPlayer()
     __current_playerList = None
+    __happy_playerList = None
+    __sad_playerList = None
     __instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -67,7 +71,7 @@ class Player(object):
         :return: service-bool: 服务层执行结果
         msg: 服务层执行结果信息
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
             return service_bool, msg
@@ -79,6 +83,8 @@ class Player(object):
             abs_dir = os.path.abspath(dir)
         count = 0
         for root, dirs, files in os.walk(abs_dir):
+            if root != abs_dir and os.path.isdir(root):
+                continue
             for file in files:
                 if os.path.splitext(file)[1] == '.mp3':
                     print(os.path.join(root, file))
@@ -97,7 +103,7 @@ class Player(object):
         :return: service_bool: 服务层执行结果
         msg: 服务层执行结果信息
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
             return service_bool, msg
@@ -138,7 +144,7 @@ class Player(object):
         :return: service_bool: 服务层执行结果
         msg: 服务层执行信息
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
             return service_bool, msg
@@ -176,7 +182,7 @@ class Player(object):
         :return: service_bool: 服务层执行结果
         msg: 服务层执行信息
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
             return service_bool, msg
@@ -213,7 +219,7 @@ class Player(object):
         :param step:
         :return:
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
             return service_bool, msg
@@ -241,7 +247,7 @@ class Player(object):
         :param step: 表示降低的幅度
         :return:
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
             return service_bool, msg
@@ -268,7 +274,7 @@ class Player(object):
         该函数用于暂停正在播放的音乐
         :return:
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
             return service_bool, msg
@@ -285,7 +291,7 @@ class Player(object):
         :return: service_bool: 表示执行的结果
         msg: 执行结果信息
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
             return service_bool, msg
@@ -302,7 +308,7 @@ class Player(object):
         :param m:  表示要切换的播放模式，若为空串，则为往下的一个模式
         :return:
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
             return service_bool, msg
@@ -318,7 +324,7 @@ class Player(object):
                 msg = self.__service_result_helper(service_bool, "模式参数输入不正确")
                 return service_bool, msg
             mod = self.__mode_table[m]
-            self.__current_playerList(mod)
+            self.__current_playerList.setPlaybackMode(mod)
             service_bool = True
             msg = self.__service_result_helper(service_bool, "切换音乐播放模式为: %s" % (self.__mode_name_table[mod]))
             return service_bool, msg
@@ -331,10 +337,16 @@ class Player(object):
         msg: 服务层执行信息
         names: list类型，播放列表中从当前开始的下num首歌名
         '''
-        if self.__status != Status.Read:
+        if self.__status != Status.Music:
             service_bool = False
             msg = self.__service_result_helper(service_bool, "处于阅读模式下，该命令无效")
-            return service_bool, msg
+            names = []
+            return service_bool, msg, names
+        if self.__current_playerList == None:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "无播放列表，请先载入音乐")
+            names = []
+            return service_bool, msg, names
         len = self.__current_playerList.mediaCount()
         idx = self.__current_playerList.currentIndex()
         it = 0
@@ -402,3 +414,118 @@ class Player(object):
         else:
             msg = "SERVICE ERROR: %s\n" % (msg)
         return msg
+
+    def analyze(self, filepath):
+        '''
+        根据文本分析结果播放相应的开心或悲伤的音乐
+        :param emotion:  positive_prob 浮点数表示积极所占的可能性
+        text: 文本内容
+        :return: service_bool: 服务层执行结果
+        msg: 服务层执行信息
+        '''
+        if self.__status != Status.Read:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "处于播放模式下，该命令无效")
+            return service_bool, msg
+
+        abs_dir, temp_file_name = os.path.split(os.path.abspath(sys.argv[0]))
+        happy_dir = abs_dir + "\\happy"
+        print(happy_dir)
+        sad_dir = abs_dir + "\\sad"
+        print(sad_dir)
+        if not os.path.isdir(happy_dir):
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "happy文件夹不存在，请在目录下创建")
+            return service_bool, msg
+        if not os.listdir(happy_dir):
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "happy文件夹中不存在音乐文件")
+            return service_bool, msg
+        if not os.path.isdir(sad_dir):
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "sad文件夹不存在，请在目录下创建")
+            return service_bool, msg
+        if not os.listdir(sad_dir):
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "sad文件夹中不存在音乐文件")
+            return service_bool, msg
+
+        self.__happy_playerList = QMediaPlaylist()
+        self.__sad_playerList = QMediaPlaylist()
+        count = 0
+        for root, dirs, files in os.walk(happy_dir):
+            for file in files:
+                if os.path.splitext(file)[1] == '.mp3':
+                    print(os.path.join(root, file))
+                    item = QMediaContent(QUrl.fromLocalFile(os.path.join(root, file)))
+                    self.__happy_playerList.addMedia(item)
+                    count += 1
+        if count == 0:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "happy文件夹中不存在音乐文件")
+            return service_bool, msg
+        count = 0
+        for root, dirs, files in os.walk(sad_dir):
+            for file in files:
+                if os.path.splitext(file)[1] == '.mp3':
+                    print(os.path.join(root, file))
+                    item = QMediaContent(QUrl.fromLocalFile(os.path.join(root, file)))
+                    self.__sad_playerList.addMedia(item)
+                    count += 1
+        if count == 0:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "sad文件夹中不存在音乐文件")
+            return service_bool, msg
+
+        abs_filepath = os.path.abspath(filepath)
+        with open(abs_filepath, 'r') as f:
+            text = f.read()
+        analyze = Analyze()
+        emotion = analyze.sentiment_classify(text)
+        print(emotion)
+        if emotion > 0.5:
+            self.__happy_playerList.setPlaybackMode(QMediaPlaylist.Random)
+            self.__current_player.setPlaylist(self.__happy_playerList)
+            self.__current_player.play()
+        else:
+            self.__sad_playerList.setPlaybackMode(QMediaPlaylist.Random)
+            self.__current_player.setPlaylist(self.__sad_playerList)
+            self.__current_player.play()
+        service_bool = True
+        msg = self.__service_result_helper(service_bool, "分析成功，该文章积极倾向为%f\n文本内容:\n%s" % (emotion, text))
+        return service_bool, msg
+
+    def status(self, s=""):
+        '''
+        :param s: 用于指明切换到的模式的显式参数
+        :return: service_bool 服务层执行结果
+        msg 服务层执行信息
+        '''
+        if s == "":
+            if self.__status == Status.Music:
+                self.__status = Status.Read
+                service_bool = True
+                msg = self.__service_result_helper(service_bool, "播放器切换为文本分析模式")
+                return service_bool, msg
+            else:
+                self.__status = Status.Music
+                self.__current_player.setPlaylist(self.__current_playerList)
+                service_bool = True
+                msg = self.__service_result_helper(service_bool, "播放器切换为音乐播放模式")
+                return service_bool, msg
+        elif s in ['read', 'music']:
+            if s == 'read':
+                self.__status = Status.Read
+                service_bool = True
+                msg = self.__service_result_helper(service_bool, "播放器切换为文本分析模式")
+                return service_bool, msg
+            else:
+                self.__status = Status.Music
+                self.__current_player.setPlaylist(self.__current_playerList)
+                service_bool = True
+                msg = self.__service_result_helper(service_bool, "播放器切换为音乐播放模式")
+                return service_bool, msg
+        else:
+            service_bool = False
+            msg = self.__service_result_helper(service_bool, "参数不规范")
+            return service_bool, msg
